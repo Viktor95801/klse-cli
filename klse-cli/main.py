@@ -92,7 +92,6 @@ def prepare_commands():
             if "childs" in kf.keys() and task_sequence[0] in kf["childs"].keys():
                 kf = kf["childs"][task_sequence[0]]
                 task_sequence.pop(0)
-                print(kf)
             else:
                 break
             
@@ -193,12 +192,12 @@ def interpret_cmd(command: Command, options: list[Opt], arguments: list[str]):
     if command:
         command.exec()
 
-compilers = [shutil.which("cc"), shutil.which("c++")]
-if not compilers[0]:
-    print("Couldn't find the C compiler (assumes 'cc' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
-    sys.exit(1)
-if not compilers[1]:
-    print("Couldn't find the C++ compiler (assumes 'c++' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
+# compilers = [shutil.which("cc"), shutil.which("c++")]
+# if not compilers[0]:
+#     print("Couldn't find the C compiler (assumes 'cc' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
+#     sys.exit(1)
+# if not compilers[1]:
+#     print("Couldn't find the C++ compiler (assumes 'c++' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
 
 def main(args: list[str] = sys.argv):
     prepare_commands()
