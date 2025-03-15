@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Viktor Hugo Caetano M. Goulart
+# Copyright (c) 2025 Kaklik And Viktor Hugo Caetano M. Goulart
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,35 +55,61 @@ def prepare_commands():
         global default_search_path
         default_search_path = new_path
     # Commands
+    
+    #TODO: Improve the logic on this
     def task_exec_klse():
-        CC = compilers[0]
-        CPP = compilers[1]
-        
-        to_exec: list[str] = input("What task do you want to execute? i.e. \"build release\" ").strip().split(" ")
+        task_sequence: list[str] = input("What task do you want to execute? i.e. \"build release\" ").strip().split(" ")
+        print()
+        if task_sequence[0] == '':
+            print("No task provided")
+            sys.exit(1)
         path = os.path.join(default_search_path, "klse.json")
-        if os.path.exists(path):
+        if os.path.isfile(path):
             with open(path) as f:
-                klse: dict = json.loads(f.read())
+                kf: dict = json.loads(f.read())
         else:
-            print(f"Could not find or load file `{default_search_path + "klse.json"}`")
+            print(f"Could not find or load file `{path}`")
+            sys.exit(1)
+            
+        kf = kf.get("task", None)
+        if kf is None:
+            print(f"Could not find a \"task\" object on file `{path}`")
             sys.exit(1)
         
-        to_run: str = ''
-        if to_exec[0] in klse["task"].keys():
-            if OS in klse["task"][to_exec[0]].keys():
-                to_run += klse["task"][to_exec[0]][OS]
-            if len(to_exec) > 1:
-                if to_exec[1] in klse["task"][to_exec[0]]["childs"]:
-                    if OS in klse["task"][to_exec[0]]["childs"][to_exec[1]]:
-                        to_run += klse["task"][to_exec[0]]["childs"][to_exec[1]][OS]
-                else:
-                    print(f"Subtask `{to_exec[1]}` was not found")
-                    sys.exit(1)
-        else:
-            print(f"The task `{to_exec[0]}` was not found.")
-            sys.exit(1)
+        def exec_task(task: dict):
+            if OS in task.keys():
+                subprocess.run(task[OS], shell=True)
+            elif "task" in task.keys():
+                subprocess.run(task["task"], shell=True)
+            else:
+                print("\033[91mERROR: Invalid Task!!!\033[0m")
+                sys.exit(1)
         
-        subprocess.run(to_run, shell=True)
+        if task_sequence[0] in kf.keys():
+            kf = kf[task_sequence[0]]
+            task_sequence.pop(0)
+        while len(task_sequence) > 0:
+            if "childs" in kf.keys() and task_sequence[0] in kf["childs"].keys():
+                kf = kf["childs"][task_sequence[0]]
+                task_sequence.pop(0)
+                print(kf)
+            else:
+                break
+            
+        exec_task(kf)
+        # if to_exec[0] in klse["task"].keys():
+        #     if OS in klse["task"][to_exec[0]].keys():
+        #         subprocess.run(klse["task"][to_exec[0]][OS], shell=True)
+        #     if len(to_exec) > 1:
+        #         if to_exec[1] in klse["task"][to_exec[0]]["childs"]:
+        #             if OS in klse["task"][to_exec[0]]["childs"][to_exec[1]]:
+        #                 subprocess.run(klse["task"][to_exec[0]]["childs"][to_exec[1]][OS], shell=True)
+        #         else:
+        #             print(f"Subtask `{to_exec[1]}` was not found")
+        #             sys.exit(1)
+        # else:
+        #     print(f"The task `{to_exec[0]}` was not found.")
+        #     sys.exit(1)
         
     def help_klse():
         print("Usage: klse-cli [options] [command]\n")

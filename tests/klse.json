@@ -7,6 +7,20 @@
             "childs":{
                 "cool":{
                     "windows":"echo cool"
+                },
+                "cool2":{
+                    "windows":"echo cool2"
+                }
+            }
+        },
+        "release":{
+            "posix":"echo release && echo release2",
+            "childs":{
+                "cool":{
+                    "windows":"echo cool"
+                },
+                "cool2":{
+                    "windows":"echo cool2"
                 }
             }
         }
