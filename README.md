@@ -13,12 +13,11 @@ This is just a CLI tool for it, to be used in the shell.
 $ klse-cli [options] [command]
 ```
 
-Install
+# Install
 
-```bash
-$ git clone https://github.com/Viktor95801/klse-cli.git
-$ python3 setup.py install
-```
+Download from github releases or make a shell script to execute the python file yourself.
+
+If you want max comfort with it, add it as a %PATH% variable to access it from anywhere on your system.
 
 # Commands
 
