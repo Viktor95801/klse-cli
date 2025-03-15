@@ -96,7 +96,7 @@
  [],
  False,
  False,
- 1742066135,
+ 1742067199,
  [('run.exe',
    'C:\\Users\\FaBola\\AppData\\Local\\Programs\\Python\\Python312-32\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-32bit-intel\\run.exe',
    'EXECUTABLE')],

@@ -45,7 +45,7 @@ default_options = {
 
 default_commands = {
     "help": Command("help", "Show this help message"),
-    "task": Command("task", "Execute a klse.json tasks file `klse -tp dir task \"build release\"`"),
+    "task": Command("task", "Execute a klse.json tasks file `klse -tp dir task build release`"),
     "build-dir": Command("build-dir", "Prepares all the bin and build directories based on your current CD directory")
 }
 
@@ -213,7 +213,7 @@ def interpret_cmd(command: Command, options: list[Opt], arguments: list[str]):
 def main(args: list[str] = sys.argv):
     prepare_commands()
     if len(args) == 0:
-        print("Use `klse-cli help` to get help")
+        default_commands["help"].exec()
         sys.exit(0)
     command, options, arguments = lex_parse(args)
     
