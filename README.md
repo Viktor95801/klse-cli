@@ -10,7 +10,7 @@ This is just a CLI tool for it, to be used in the shell.
 # Usage
 
 ```bash
-$ klse-cli [arguments] [command] [options]
+$ klse-cli [options] [command]
 ```
 
 Install

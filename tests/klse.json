@@ -1,0 +1,14 @@
+{
+    "name":"klse",
+    "version":"1.0",
+    "task":{
+        "build":{
+            "windows":"echo aaa",
+            "childs":{
+                "cool":{
+                    "windows":"echo cool"
+                }
+            }
+        }
+    }
+}
