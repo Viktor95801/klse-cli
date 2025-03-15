@@ -45,7 +45,7 @@ default_options = {
 
 default_commands = {
     "help": Command("help", "Show this help message"),
-    "task": Command("task", "Execute a klse.json tasks file"),
+    "task": Command("task", "Execute a klse.json tasks file `klse -tp dir task \"build release\"`"),
     "build-dir": Command("build-dir", "Prepares all the bin and build directories based on your current CD directory")
 }
 
@@ -57,8 +57,8 @@ def prepare_commands():
     # Commands
     
     #TODO: Improve the logic on this
-    def task_exec_klse():
-        task_sequence: list[str] = input("What task do you want to execute? i.e. \"build release\" ").strip().split(" ")
+    def task_exec_klse(task_sequence: str):
+        task_sequence: list[str] = task_sequence.strip().split(" ")
         print()
         if task_sequence[0] == '':
             print("No task provided")
@@ -146,7 +146,7 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
     cmm_set = False
     arguments = []
 
-    for arg in args:
+    for i, arg in enumerate(args):
         if arg.startswith('-'):
             arg = arg[1:]
             if arg.startswith("tp"):
@@ -162,8 +162,6 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
                 print(f"Unknown option '-{arg}', use `klse-cli help` to get help")
                 sys.exit(1)
         else:
-            if cmm_set:
-                print("Only one command per `klse-cli` usage")
             match arg:
                 case "help":
                     cmm = default_commands["help"]
@@ -173,6 +171,12 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
                     cmm_set = True
                 case "task":
                     cmm = default_commands["task"]
+                    to_append: list[str] = []
+                    for arg2 in args[i + 1:]:
+                        to_append.append(arg2)
+                    arguments.append(" ".join(to_append))
+
+                    break
                     cmm_set = True
                 case _:
                     print(f"Unknown command '{arg}', use `klse-cli help` to get help")
@@ -190,7 +194,14 @@ def interpret_cmd(command: Command, options: list[Opt], arguments: list[str]):
                 print("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
                 sys.exit(1)
     if command:
-        command.exec()
+        if command == default_commands["task"]:
+            if arguments:
+                command.exec(arguments.pop(0))
+            else:
+                print("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
+                sys.exit(1)
+        else:
+            command.exec()
 
 # compilers = [shutil.which("cc"), shutil.which("c++")]
 # if not compilers[0]:
