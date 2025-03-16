@@ -18,9 +18,7 @@ class Command:
     def setExec(self, call: Callable):
         self.exec = call
 
-class OptType(Enum):
-    TASK_PATH = 0
-
-class CommandType(Enum):
-    TASK = 0
-    HELP = 1
+def print_error(*val):
+    print(f"\033[91mERROR:\033[0m",*val)
+def print_success(sucess_message="SUCCESS",*val):
+    print(f"\033[32m{sucess_message}:\033[0m",*val)

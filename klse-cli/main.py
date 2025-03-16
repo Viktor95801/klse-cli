@@ -26,8 +26,9 @@ import subprocess
 import shutil
 from typing import Union
 
-# klse-cli
+# klse
 from options import *
+from shlex import split as shsplit
 
 # const
 
@@ -46,6 +47,8 @@ default_options = {
 default_commands = {
     "help": Command("help", "Show this help message"),
     "task": Command("task", "Execute a klse.json tasks file `klse -tp dir task build release`"),
+    "smart-compile":Command("smart-compile","Compile Just Modified Files"),
+    "compile-folder":Command("compile-folder","Compile A Entire Folder. But Dont Compile The Subfolders"),
     "build-dir": Command("build-dir", "Prepares all the bin and build directories based on your current CD directory")
 }
 
@@ -58,22 +61,21 @@ def prepare_commands():
     
     #TODO: Improve the logic on this
     def task_exec_klse(task_sequence: str):
-        task_sequence: list[str] = task_sequence.strip().split(" ")
-        print()
+        task_sequence: list[str] = shsplit(task_sequence)
         if task_sequence[0] == '':
-            print("No task provided")
+            print_error("No task provided")
             sys.exit(1)
         path = os.path.join(default_search_path, "klse.json")
         if os.path.isfile(path):
             with open(path) as f:
                 kf: dict = json.loads(f.read())
         else:
-            print(f"Could not find or load file `{path}`")
+            print_error(f"Could not find or load file `{path}`")
             sys.exit(1)
             
         kf = kf.get("task", None)
         if kf is None:
-            print(f"Could not find a \"task\" object on file `{path}`")
+            print_error(f"Could not find a \"task\" object on file `{path}`")
             sys.exit(1)
         
         def exec_task(task: dict):
@@ -82,7 +84,7 @@ def prepare_commands():
             elif "task" in task.keys():
                 subprocess.run(task["task"], shell=True)
             else:
-                print("\033[91mERROR: Invalid Task!!!\033[0m")
+                print_error("Invalid Task!!!")
                 sys.exit(1)
         
         if task_sequence[0] in kf.keys():
@@ -96,22 +98,9 @@ def prepare_commands():
                 break
             
         exec_task(kf)
-        # if to_exec[0] in klse["task"].keys():
-        #     if OS in klse["task"][to_exec[0]].keys():
-        #         subprocess.run(klse["task"][to_exec[0]][OS], shell=True)
-        #     if len(to_exec) > 1:
-        #         if to_exec[1] in klse["task"][to_exec[0]]["childs"]:
-        #             if OS in klse["task"][to_exec[0]]["childs"][to_exec[1]]:
-        #                 subprocess.run(klse["task"][to_exec[0]]["childs"][to_exec[1]][OS], shell=True)
-        #         else:
-        #             print(f"Subtask `{to_exec[1]}` was not found")
-        #             sys.exit(1)
-        # else:
-        #     print(f"The task `{to_exec[0]}` was not found.")
-        #     sys.exit(1)
         
     def help_klse():
-        print("Usage: klse-cli [options] [command]\n")
+        print("Usage: klse [options] [command]\n")
         
         cmm: list[Command] = [c for c in default_commands.values() if isinstance(c, Command)]
         opt: list[Opt] = [o for o in default_options.values() if isinstance(o, Opt)]
@@ -123,7 +112,7 @@ def prepare_commands():
         for o in opt:
             print(f"\t-{o.opt} - {o.description}")
     def build_dir_klse():
-        directory: str = os.path.join(os.getcwd(), "build") 
+        directory: str = os.path.join(os.getcwd(), "dist")
         if not os.path.exists(directory):
             os.mkdir(directory)
         
@@ -132,12 +121,61 @@ def prepare_commands():
             
             if not os.path.exists(pth):
                 os.mkdir(pth)
-        
-    
+    def smart_compile_klse(args: str):
+        args=shsplit(args)
+        if len(args)<3:
+            print_error("Invalid Args Count")
+            sys.exit(1)
+        src_file=args[1]
+        output_dir=args[2]
+        out_file=f"{output_dir}/{os.path.splitext(os.path.basename(src_file))[0]}.o"
+        args_ext=""
+        if not os.path.isdir(output_dir):
+            print_error("Invalid Output Dir")
+            sys.exit(1)
+        if(len(args)>3):
+            args_ext=" ".join(args[3:len(args)])
+        command=""
+        match args[0]:
+            case "c++"|"c":
+                command=f"{compilers[args[0]]} {src_file} -o {out_file} -c {args_ext}"
+            case _:
+                print_error(f"Invalid Languague {args[0]}")
+        src_mtime = os.path.getmtime(src_file)
+        out_mtime = os.path.getmtime(out_file) if os.path.isfile(out_file) else 0
+        if not os.path.exists(out_file) or src_mtime > out_mtime:
+            print_success("COMPILATION COMMAND",command)
+            subprocess.run(command)
+        else:
+            print_success("ALREADY IS COMPILED",f"{out_file}")
+    def compile_folder_klse(args: str):
+        args=shsplit(args)
+        if len(args)<3:
+            print_error("Invalid Args Count")
+            sys.exit(1)
+        output_dir=args[1]
+        if not os.path.isdir(output_dir):
+            print_error("Invalid Output Dir")
+            sys.exit(1)
+        args_ext=""
+        if(len(args)>3):
+            args_ext=" ".join(args[3:len(args)])
+        src_dir=args[2]
+        language=args[0]
+        if not os.path.isdir(src_dir):
+            print_error("Invalid Sources Dir")
+            sys.exit(1)
+        files=os.listdir(src_dir)
+        for f in files:
+            fp=src_dir+"/"+f
+            if os.path.isfile(fp):
+                default_commands["smart-compile"].exec(f"{language} {fp} {output_dir} {args_ext}")
     default_options["-tp"].setExec(task_path_klse)
     
     default_commands["help"].setExec(help_klse)
-    default_commands["task"].setExec(task_exec_klse) 
+    default_commands["task"].setExec(task_exec_klse)
+    default_commands["smart-compile"].setExec(smart_compile_klse)
+    default_commands["compile-folder"].setExec(compile_folder_klse)
     default_commands["build-dir"].setExec(build_dir_klse)
 
 def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
@@ -159,7 +197,7 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
                     print(f"Expected '=<path>' at end of '-{arg}' but didn't get it.")
                     sys.exit(1)
             else:
-                print(f"Unknown option '-{arg}', use `klse-cli help` to get help")
+                print(f"Unknown option '-{arg}', use `klse help` to get help")
                 sys.exit(1)
         else:
             match arg:
@@ -169,6 +207,20 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
                 case "build-dir":
                     cmm = default_commands["build-dir"]
                     cmm_set = True
+                case "smart-compile":
+                    cmm = default_commands["smart-compile"]
+                    to_append: list[str] = []
+                    for arg2 in args[i + 1:]:
+                        to_append.append(arg2)
+                    arguments.append(" ".join(to_append))
+                    break
+                case "compile-folder":
+                    cmm = default_commands["compile-folder"]
+                    to_append: list[str] = []
+                    for arg2 in args[i + 1:]:
+                        to_append.append(arg2)
+                    arguments.append(" ".join(to_append))
+                    break
                 case "task":
                     cmm = default_commands["task"]
                     to_append: list[str] = []
@@ -179,7 +231,7 @@ def lex_parse(args: list[str]) -> tuple[Command, list[Opt], list[str]]:
                     break
                     cmm_set = True
                 case _:
-                    print(f"Unknown command '{arg}', use `klse-cli help` to get help")
+                    print(f"Unknown command '{arg}', use `klse help` to get help")
     
     return cmm, opts, arguments
 
@@ -191,24 +243,39 @@ def interpret_cmd(command: Command, options: list[Opt], arguments: list[str]):
             if arguments:
                 opt.exec(arguments.pop(0))
             else:
-                print("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
+                print_error("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
                 sys.exit(1)
     if command:
         if command == default_commands["task"]:
             if arguments:
                 command.exec(arguments.pop(0))
             else:
-                print("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
+                print_error("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
+                sys.exit(1)
+        elif command == default_commands["smart-compile"]:
+            if arguments:
+                command.exec(arguments.pop(0))
+            else:
+                print_error("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
+                sys.exit(1)
+        elif command == default_commands["compile-folder"]:
+            if arguments:
+                command.exec(arguments.pop(0))
+            else:
+                print_error("Arguments list is empty, this means the CLI tool expected an argument for an option but it was missing")
                 sys.exit(1)
         else:
             command.exec()
 
-# compilers = [shutil.which("cc"), shutil.which("c++")]
-# if not compilers[0]:
-#     print("Couldn't find the C compiler (assumes 'cc' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
-#     sys.exit(1)
-# if not compilers[1]:
-#     print("Couldn't find the C++ compiler (assumes 'c++' alias), please create an alias for your C compiler or download one from the internet (w64devkit/mingw or gcc)")
+compilers = {
+    "c":shutil.which("gcc"), 
+    "c++":shutil.which("g++")
+}
+if not compilers["c"]:
+    print("Couldn't find the C compiler (assumes 'gcc' alias), please create an alias for your C compiler or download one from the internet (mingw or gcc)")
+    sys.exit(1)
+if not compilers["c++"]:
+    print("Couldn't find the C++ compiler (assumes 'g++' alias), please create an alias for your C compiler or download one from the internet (mingw or gcc)")
 
 def main(args: list[str] = sys.argv):
     prepare_commands()
