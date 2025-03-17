@@ -70,7 +70,7 @@ if not compilers["cc"]:
         "armcc",
         "iccarm"
     ])
-    if compilers["cc"]:
+    if compilers["cc"] is None:
         log_user(ERROR, "Couldn't find the C compiler (assumes 'cc' alias), please create an alias for your C compiler or download one from the internet (mingw or gcc)")
         sys.exit(1)
 if not compilers["c++"]:
@@ -82,7 +82,7 @@ if not compilers["c++"]:
         "armcc",
         "iccarm"
     ])
-    if compilers["c++"]:
+    if compilers["c++"] is None:
         log_user(ERROR, "Couldn't find the C++ compiler (assumes 'c++' alias), please create an alias for your C++ compiler or download one from the internet (mingw or gcc)")
         sys.exit(1)
 del find_compiler
