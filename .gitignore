@@ -1,7 +1,15 @@
 *.pyc
 __pycache__
 
+*.spec
+*.o
+*.c
+*.cache
+
+temp*
 .vscode
 
 build
 tests
+
+klse-cli

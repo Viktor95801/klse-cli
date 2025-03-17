@@ -10,18 +10,20 @@ This is just a CLI tool for it, to be used in the shell.
 # Usage
 
 ```bash
-$ klse-cli [options] [command]
+$ klse [options] [command] <arguments>
 ```
 
 # Install
 
-Download from github releases or make a shell script to execute the python file yourself.
-
-If you want max comfort with it, add it as a %PATH% variable to access it from anywhere on your system.
+```bash
+git clone https://github.com/Viktor95801/klse-cli.git
+cd klse-cli
+python3 install.py
+```
 
 # Commands
 
 Use `help` to see a list of commands.
 ```bash
-$ klse-cli help
+$ klse help
 ```
